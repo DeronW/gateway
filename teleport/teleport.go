@@ -2,6 +2,7 @@ package teleport
 
 import (
 	"fmt"
+	"gateway/common"
 	"gateway/configs"
 	"net"
 	"time"
@@ -23,6 +24,7 @@ func handleConn(conn net.Conn) {
 
 	ctx := string(buf[:length])
 
+	fmt.Printf("%s", ctx)
 }
 
 func ping() {
@@ -34,25 +36,21 @@ func ping() {
 }
 
 func Run() {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", configs.HOST, configs.PORT))
+	common.FatalError(err)
 
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%s", configs.PORT))
-	if err != nil {
-		fmt.Printf("Error: %s", err)
-	}
+	lt, err := net.ListenTCP("tcp", addr)
+	common.FatalError(err)
 
 	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			fmt.Printf("Error: %s", err)
-		}
-		err = conn.SetReadDeadline(time.Time{})
-		if err != nil {
-			fmt.Printf("Error: %s", err)
-		}
-		err = conn.SetWriteDeadline(time.Time{})
-		if err != nil {
-			fmt.Printf("Error: %s", err)
-		}
+		conn, err := lt.Accept()
+		common.CheckError(err)
+		//err = conn.SetKeepAlive(true)
+		//checkError(err)
+		//err = conn.SetReadDeadline(time.Time{})
+		//common.CheckError(err)
+		//err = conn.SetWriteDeadline(time.Time{})
+		//common.CheckError(err)
 		go handleConn(conn)
 	}
 
