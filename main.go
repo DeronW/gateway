@@ -1,9 +1,12 @@
 package main
 
 import (
+	"gateway/common"
 	"gateway/teleport"
 )
 
 func main() {
-	teleport.Run()
+	go teleport.Run()
+
+	common.HoldOn()
 }
