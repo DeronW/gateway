@@ -1,4 +1,10 @@
+Phantom Gateway Server
+============
 
-github.com/Sirupsen/logrus
-github.com/getsentry/raven-go
-github.com/delongw/phantom-tcp
+this server was design to instead of EventMachine tcp.rb server
+
+dependence lib
+
+* github.com/Sirupsen/logrus
+* github.com/getsentry/raven-go
+* github.com/delongw/phantom-tcp
