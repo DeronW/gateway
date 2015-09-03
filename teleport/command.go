@@ -1,5 +1,9 @@
 package teleport
 
+import (
+//"encoding/base64"
+)
+
 type Command struct {
 	encrypted      bool
 	w_wncrypted    bool
