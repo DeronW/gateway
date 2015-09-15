@@ -4,6 +4,7 @@ import (
 	"gateway/configs"
 	log "github.com/Sirupsen/logrus"
 	tcp "github.com/delongw/phantom-tcp"
+	"time"
 )
 
 func Run() {
@@ -15,11 +16,11 @@ func Run() {
 		SendBuf:    configs.TCP_SEND_BUFFER,
 		ReceiveBuf: configs.TCP_RECEIVE_BUFFER,
 
-		Deadline:          configs.TCP_DEADLINE,
+		Deadline:          time.Second * configs.TCP_DEADLINE,
 		KeepAlive:         configs.TCP_KEEP_ALIVE,
-		KeepAliveIdle:     configs.TCP_KEEP_ALIVE_IDLE,
+		KeepAliveIdle:     time.Second * configs.TCP_KEEP_ALIVE_IDLE,
 		KeepAliveCount:    configs.TCP_KEEP_ALIVE_COUNT,
-		KeepAliveInterval: configs.TCP_KEEP_ALIVE_INTERVAL,
+		KeepAliveInterval: time.Second * configs.TCP_KEEP_ALIVE_INTERVAL,
 
 		Separtor: configs.TCP_SERARTOR,
 	}
