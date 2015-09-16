@@ -6,40 +6,40 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/antonholmquist/jason"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 )
 
-func Post2Rails(packet *command.Packet, raddr net.Addr) {
+func Post2Rails(packet *command.Packet, uuid string) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Info("post to rails got error")
+			log.Info(err)
+		}
+	}()
+
 	if packet.Op == "1" {
 		go post2rails(packet.ToRailsURLValues(), func(bytes []byte) {
-
-			data, err := jason.NewObjectFromBytes(bytes)
-			if err != nil {
-				log.Info(err)
-			}
-
-			e, err := data.GetObject("error")
-			if e != nil || err != nil {
+			data, _ := jason.NewObjectFromBytes(bytes)
+			e, _ := data.GetObject("error")
+			if e != nil {
 				log.Info(e)
-				log.Info(err)
 				return
 			}
 
 			log.Info(data)
+			ctrl, err := data.GetObject("control")
+			if err != nil {
+				handleRailsControl(ctrl, uuid)
+			}
 
 			cmd, err := data.GetObject("command")
-
 			if err != nil {
-				log.Info(err)
+				handleRailsCommand(cmd)
 			}
 
-			ctrl, err := data.GetObject("control")
-
-			if err != nil {
-				log.Info(err)
-			}
+			log.Info(cmd)
+			log.Info(ctrl)
 		})
 	} else {
 
@@ -67,3 +67,12 @@ func post2rails(v url.Values, fn func(bytes []byte)) {
 	body = body[1 : len(body)-1]
 	fn([]byte(body))
 }
+
+func handleRailsControl(ctrl *jason.Object, uuid string) {
+	iv, err := ctrl.GetInt64("SET_IV")
+	if err == nil {
+		GlobalPool.SetIV(uuid, iv)
+	}
+}
+
+func handleRailsCommand(cmd interface{}) {}

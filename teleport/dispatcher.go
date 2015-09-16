@@ -3,11 +3,10 @@ package teleport
 import (
 	"gateway/protocol"
 	log "github.com/Sirupsen/logrus"
-	"net"
 	"runtime/debug"
 )
 
-func Dispatch(data []byte, raddr net.Addr) {
+func Dispatch(data []byte, uuid string) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error(string(debug.Stack()))
@@ -26,5 +25,5 @@ func Dispatch(data []byte, raddr net.Addr) {
 	default:
 		log.Info("no handler for this command")
 	}
-	Post2Rails(packet, raddr)
+	Post2Rails(packet, uuid)
 }

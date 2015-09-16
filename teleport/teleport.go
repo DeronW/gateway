@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var GlobalPool *Pool
+
 func Run() {
 
 	config := &tcp.ServerConfig{
@@ -25,7 +27,12 @@ func Run() {
 		Separtor: configs.TCP_SERARTOR,
 	}
 
-	handler := tcp.Handler(&Pool{})
+	GlobalPool = &Pool{
+		conns:             make(map[string]*connection, 1000),
+		unauthorizedConns: make(map[string]*connection, 1000),
+	}
+
+	handler := tcp.Handler(GlobalPool)
 
 	server := tcp.NewServer(config, handler)
 	log.Info("starting tcp server")
