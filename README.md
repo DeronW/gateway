@@ -9,3 +9,4 @@ dependence lib
 * github.com/getsentry/raven-go
 * github.com/delongw/phantom-tcp
 * github.com/antonholmquist/jason
+* github.com/spf13/viper

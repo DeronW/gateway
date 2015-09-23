@@ -19,6 +19,14 @@ type Packet struct {
 	cmdLength         int
 }
 
+type PacketToTeleport struct {
+	DeviceAddr        uint16
+	Encrypted         bool
+	Op                uint8
+	Params            string
+	WirelessEncrypted bool
+}
+
 func (p *Packet) ToRailsURLValues() url.Values {
 	v := url.Values{}
 	v.Set("command[0][encrypted]", fmt.Sprintf("%t", p.Encrypted))
@@ -42,6 +50,10 @@ type CmdLoginFirst struct {
 	op string
 }
 
+func (c *CmdLoginFirst) GetOp() string {
+	return c.op
+}
+
 //type CmdLoginSecond struct {
 //op                 int
 //encrypted          bool
@@ -55,7 +67,3 @@ type CmdLoginFirst struct {
 //set_user_key       string
 //set_user_key_index string
 //}
-
-func (c *CmdLoginFirst) GetOp() string {
-	return c.op
-}

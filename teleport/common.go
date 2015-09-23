@@ -2,6 +2,7 @@ package teleport
 
 import (
 	"gateway/configs"
+	"gateway/protocol"
 	"gateway/protocol/command"
 	log "github.com/Sirupsen/logrus"
 	"github.com/antonholmquist/jason"
@@ -29,17 +30,14 @@ func Post2Rails(packet *command.Packet, uuid string) {
 
 			log.Info(data)
 			ctrl, err := data.GetObject("control")
-			if err != nil {
-				handleRailsControl(ctrl, uuid)
+			if err == nil {
+				handleRailsControl(uuid, ctrl)
 			}
 
 			cmd, err := data.GetObject("command")
-			if err != nil {
-				handleRailsCommand(cmd)
+			if err == nil {
+				handleRailsCommand(uuid, packet.Version, cmd)
 			}
-
-			log.Info(cmd)
-			log.Info(ctrl)
 		})
 	} else {
 
@@ -68,11 +66,41 @@ func post2rails(v url.Values, fn func(bytes []byte)) {
 	fn([]byte(body))
 }
 
-func handleRailsControl(ctrl *jason.Object, uuid string) {
-	iv, err := ctrl.GetInt64("SET_IV")
+func handleRailsControl(uuid string, ctrl *jason.Object) {
+	iv, err := ctrl.GetValue("SET_IV")
 	if err == nil {
-		GlobalPool.SetIV(uuid, iv)
+		iv, _ := iv.Number()
+		GlobalPool.SetIV(uuid, string(iv))
+	}
+
+	uk, err := ctrl.GetString("SET_USER_KEY")
+	if err == nil {
+		GlobalPool.SetUserKey(uuid, uk)
+	}
+
+	uki, err := ctrl.GetInt64("SET_USER_KEY_INDEX")
+	if err == nil {
+		GlobalPool.SetUserKeyIndex(uuid, int(uki))
 	}
 }
 
-func handleRailsCommand(cmd interface{}) {}
+func handleRailsCommand(uuid string, version int, cmd *jason.Object) {
+	p := &command.PacketToTeleport{}
+	addr, _ := cmd.GetInt64("device_addr")
+	p.DeviceAddr = uint16(addr)
+
+	p.Encrypted, _ = cmd.GetBoolean("encrypted")
+
+	op, _ := cmd.GetInt64("op")
+	p.Op = uint8(op)
+	p.Params, _ = cmd.GetString("params")
+	p.WirelessEncrypted, _ = cmd.GetBoolean("w_encrypted")
+
+	enc, err := protocol.Encrypt(p, version)
+
+	log.Info("-------------- encrypted message --------------")
+	log.Info(enc)
+	log.Info(err)
+
+	GlobalPool.Send(uuid, enc)
+}

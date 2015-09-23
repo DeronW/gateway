@@ -1,0 +1,23 @@
+
+
+sentry_dsn:
+    error: "..."
+    debug: "..."
+
+tcp:
+    host: "0.0.0.0"
+    port: 6000
+    send_buffer: 60
+    receive_buffer: 60
+
+keepalive:
+    deadline: 30
+    enable: true
+    idle: 14
+    count: 4
+    interval: 13
+    duration: 60
+
+
+rails:
+    post_url: "http://127.0.0.1/tcp/command"

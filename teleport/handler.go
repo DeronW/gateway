@@ -8,8 +8,10 @@ import (
 )
 
 type connection struct {
-	conn *tcp.Conn
-	iv   int64
+	conn         *tcp.Conn
+	iv           string
+	userKey      string
+	userKeyIndex int
 }
 
 type Pool struct {
@@ -17,10 +19,37 @@ type Pool struct {
 	unauthorizedConns map[string]*connection
 }
 
-func (p *Pool) SetIV(uuid string, iv int64) {
+func (p *Pool) SetIV(uuid string, iv string) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
 	if ok {
 		c.iv = iv
+	}
+}
+
+func (p *Pool) SetUserKey(uuid string, uk string) {
+	c, ok := GlobalPool.unauthorizedConns[uuid]
+	if ok {
+		c.userKey = uk
+	}
+}
+
+func (p *Pool) SetUserKeyIndex(uuid string, index int) {
+	c, ok := GlobalPool.unauthorizedConns[uuid]
+	if ok {
+		c.userKeyIndex = index
+	}
+}
+
+func (p *Pool) Send(uuid string, msg string) {
+	c, ok := GlobalPool.unauthorizedConns[uuid]
+	log.Info("===================== send =====================  ")
+	log.Info(msg)
+	if ok {
+		err := c.conn.Write([]byte(msg), 0)
+		if err != nil {
+			log.Info("send to teleport error")
+			log.Info(err)
+		}
 	}
 }
 
