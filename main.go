@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-func main() {
-
+func initConfig() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("/etc/gateway/")
 	viper.AddConfigPath("$HOME/.gateway/")
@@ -34,13 +33,13 @@ func main() {
 
 	viper.SetDefault("log.out", "console")
 
-	err := viper.ReadInConfig()
-
-	if err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		panic(fmt.Errorf("Fatal error  config  file: %s\n", err))
 	}
+}
 
-	go teleport.Run(&tcp.ServerConfig{
+func teleportConfig() *tcp.ServerConfig {
+	return &tcp.ServerConfig{
 		Host:       viper.GetString("tcp.host"),
 		Port:       uint32(viper.GetInt("tcp.port")),
 		Net:        "tcp",
@@ -54,7 +53,20 @@ func main() {
 		KeepAliveInterval: time.Second * viper.GetDuration("keepalive.interval"),
 
 		Separtor: '*',
-	})
+	}
+}
 
-	common.HoldOn()
+func main() {
+
+	initConfig() // this method should be TOP level
+
+	common.SetupRaven(viper.GetString("sentry_dsn"))
+
+	go teleport.Run(
+		teleportConfig(),
+		viper.GetDuration("keepalive.duration"),
+		viper.GetString("rails.post_url"),
+	)
+
+	common.HoldOn() // in development env, make server blocking
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"gateway/protocol/command"
+	"strconv"
 )
 
 func Parse(src []byte) (packet *command.Packet, cmd command.Command, err error) {
@@ -34,8 +35,7 @@ func Decrypt(s []byte) (cnt []byte) {
 }
 
 func Encrypt(p *command.PacketToTeleport, version int) (string, error) {
-
-	var enc string
+	var enc []byte
 	var err error
 
 	if p.Encrypted {
@@ -46,53 +46,53 @@ func Encrypt(p *command.PacketToTeleport, version int) (string, error) {
 			return "", err
 		}
 	}
-
-	fmt.Println(enc)
-	fmt.Println(len(enc))
-	enc = fmt.Sprintf("%s%s", int2str(uint64((len(enc)+4)/3*4), 2), enc)
-
-	fmt.Println("99999999999999999")
-	fmt.Println(enc)
-
-	base64Enc := base64.StdEncoding.EncodeToString([]byte(enc))
-
-	return fmt.Sprintf("%s*%s", base64Enc, enc), nil
+	base64Enc := base64.StdEncoding.EncodeToString(
+		append(int2byte(uint64((len(enc)+4)/3*4), 2), enc...),
+	)
+	return fmt.Sprintf("%s*", base64Enc), nil
 }
 
-func spliceNotEncryptedCmd(p *command.PacketToTeleport, version int) (enc string, err error) {
+func spliceNotEncryptedCmd(p *command.PacketToTeleport, version int) ([]byte, error) {
 
-	var e uint8
+	var enc []byte
+	e := int(version & 3)
 	if p.WirelessEncrypted {
-		e = 1 << 6
+		e += 1 << 6
 	}
-	e += uint8(version & 3)
+
+	enc = append(enc, byte(e))
 
 	if version == 0 {
-		enc = fmt.Sprintf(
-			"%s\x00\x00\x00\x00%s%s%s%s",
-			string(e),
-			int2str(uint64(p.DeviceAddr), 4),
-			int2str(uint64(p.Op), 2),
-			int2str(uint64(len(p.Params)), 2),
-			p.Params,
-		)
+		enc = append(enc, 0x00, 0x00, 0x00, 0x00)
+		enc = append(enc, int2byte(uint64(p.DeviceAddr), 4)...)
+		enc = append(enc, int2byte(uint64(p.Op), 2)...)
+		enc = append(enc, int2byte(uint64(len(p.Params)), 2)...)
+		params, err := str2byte(p.Params)
+		if err != nil {
+			return make([]byte, 0), err
+		}
+		enc = append(enc, params...)
 	} else if version == 1 {
-		enc = fmt.Sprintf(
-			"%s\x00\x00\x00\x00%s\x00\x00%s%s%s",
-			string(e),
-			int2str(uint64(p.DeviceAddr), 4),
-			int2str(uint64(len(p.Params)+2), 2),
-			int2str(uint64(p.Op), 2),
-			p.Params,
-		)
+		enc = append(enc, 0x00, 0x00, 0x00, 0x00)
+		enc = append(enc, int2byte(uint64(p.DeviceAddr), 4)...)
+		enc = append(enc, 0x00, 0x00)
+		enc = append(enc, int2byte(uint64(len(p.Params)), 2)...)
+		enc = append(enc, int2byte(uint64(p.Op), 2)...)
+
+		params, err := str2byte(p.Params)
+
+		if err != nil {
+			return make([]byte, 0), err
+		}
+		enc = append(enc, params...)
 	} else {
-		err = errors.New("wrong version")
+		return []byte{}, errors.New("wrong version")
 	}
 
-	return
+	return enc, nil
 }
 
-func int2str(i uint64, size int) (s string) {
+func int2byte(i uint64, size int) []byte {
 	b := bytes.NewBuffer([]byte{})
 
 	if size == 1 {
@@ -106,11 +106,30 @@ func int2str(i uint64, size int) (s string) {
 	} else {
 		panic(fmt.Sprintf("fail to convert int(%d), size(%d)", i, size))
 	}
+	return b.Bytes()
+}
 
-	c := b.Bytes()
+func int2str(i uint64, size int) string {
+	var s string
+	c := int2byte(i, size)
 	for m := range c {
 		s += string(c[m])
 	}
+	return s
+}
 
-	return
+func str2byte(s string) ([]byte, error) {
+	var b []byte
+	length := len(s)
+	if length%2 != 0 {
+		return make([]byte, 0), errors.New("params is not odd")
+	}
+	for i := 0; i < length; i += 2 {
+		a, err := strconv.ParseUint(string(s[i:i+2]), 16, 8)
+		if err != nil {
+			return b, err
+		}
+		b = append(b, byte(a))
+	}
+	return b, nil
 }

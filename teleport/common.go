@@ -1,7 +1,6 @@
 package teleport
 
 import (
-	"gateway/configs"
 	"gateway/protocol"
 	"gateway/protocol/command"
 	log "github.com/Sirupsen/logrus"
@@ -45,7 +44,7 @@ func Post2Rails(packet *command.Packet, uuid string) {
 }
 
 func post2rails(v url.Values, fn func(bytes []byte)) {
-	resp, err := http.PostForm(configs.RAILS_SEND_COMMAN_URL, v)
+	resp, err := http.PostForm(RailsPostUrl, v)
 	if err != nil {
 		return
 	}
@@ -98,9 +97,10 @@ func handleRailsCommand(uuid string, version int, cmd *jason.Object) {
 
 	enc, err := protocol.Encrypt(p, version)
 
-	log.Info("-------------- encrypted message --------------")
-	log.Info(enc)
-	log.Info(err)
+	if err != nil {
+		log.Error(err)
+		return
+	}
 
 	GlobalPool.Send(uuid, enc)
 }

@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"gateway/configs"
 	log "github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
 	"sync"
@@ -12,7 +11,6 @@ var once sync.Once
 
 func CheckError(err error) {
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
 		log.WithFields(log.Fields{"error": err}).Info()
 	}
 }
@@ -27,8 +25,9 @@ func ReportError(err error) {
 	raven.CaptureError(err, nil, nil)
 }
 
-func init() {
+func SetupRaven(dsn string) {
 	once.Do(func() {
-		raven.SetDSN(configs.SENTRY_DSN)
+		raven.SetDSN(dsn)
+		fmt.Println(raven.CaptureMessage("Device Gateway server starting", nil))
 	})
 }

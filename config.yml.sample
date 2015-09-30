@@ -1,8 +1,5 @@
 
-
-sentry_dsn:
-    error: "..."
-    debug: "..."
+sentry_dsn: "..."
 
 tcp:
     host: "0.0.0.0"
