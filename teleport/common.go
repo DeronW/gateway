@@ -38,8 +38,7 @@ func Post2Rails(packet *command.Packet, uuid string) {
 				handleRailsCommand(uuid, packet.Version, cmd)
 			}
 		})
-	} else {
-
+	} else if packet.Op == "2" {
 	}
 }
 

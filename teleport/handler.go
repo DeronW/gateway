@@ -44,6 +44,7 @@ func (p *Pool) Send(uuid string, msg string) {
 	log.WithFields(log.Fields{
 		"message": msg,
 	}).Info("send to teleport")
+
 	if ok {
 		timeout := time.Second * 5 //  time.Duration
 		err := c.conn.Write([]byte(msg), timeout)

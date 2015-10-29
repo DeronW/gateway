@@ -46,6 +46,9 @@ func Encrypt(p *command.PacketToTeleport, version int) (string, error) {
 			return "", err
 		}
 	}
+
+	fmt.Printf("%X\n", enc)
+
 	base64Enc := base64.StdEncoding.EncodeToString(
 		append(int2byte(uint64((len(enc)+4)/3*4), 2), enc...),
 	)
@@ -61,12 +64,13 @@ func spliceNotEncryptedCmd(p *command.PacketToTeleport, version int) ([]byte, er
 	}
 
 	enc = append(enc, byte(e))
+	paramsSize := len(p.Params)/2 + 2
 
 	if version == 0 {
 		enc = append(enc, 0x00, 0x00, 0x00, 0x00)
 		enc = append(enc, int2byte(uint64(p.DeviceAddr), 4)...)
 		enc = append(enc, int2byte(uint64(p.Op), 2)...)
-		enc = append(enc, int2byte(uint64(len(p.Params)), 2)...)
+		enc = append(enc, int2byte(uint64(paramsSize), 2)...)
 		params, err := str2byte(p.Params)
 		if err != nil {
 			return make([]byte, 0), err
@@ -76,7 +80,7 @@ func spliceNotEncryptedCmd(p *command.PacketToTeleport, version int) ([]byte, er
 		enc = append(enc, 0x00, 0x00, 0x00, 0x00)
 		enc = append(enc, int2byte(uint64(p.DeviceAddr), 4)...)
 		enc = append(enc, 0x00, 0x00)
-		enc = append(enc, int2byte(uint64(len(p.Params)), 2)...)
+		enc = append(enc, int2byte(uint64(paramsSize), 2)...)
 		enc = append(enc, int2byte(uint64(p.Op), 2)...)
 
 		params, err := str2byte(p.Params)

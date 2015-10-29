@@ -22,8 +22,10 @@ func Dispatch(data []byte, uuid string) {
 
 	switch cmd.GetOp() {
 	case "1":
+		Post2Rails(packet, uuid)
+	case "2":
+		//
 	default:
 		log.Info("no handler for this command")
 	}
-	Post2Rails(packet, uuid)
 }
