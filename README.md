@@ -1,7 +1,7 @@
 Phantom Gateway Server
 ============
 
-this server was design to instead of EventMachine tcp.rb server
+This server is designed as an alternative to EventMachine tcp.rb server
 
 dependence lib
 
