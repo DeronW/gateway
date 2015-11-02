@@ -1,4 +1,4 @@
-package command
+package protocol
 
 import (
 	"fmt"
@@ -42,15 +42,24 @@ func (p *Packet) ToRailsURLValues() url.Values {
 	return v
 }
 
+type CipherKey struct {
+	UserKeyIndex int
+	IV           string
+	Iv96str      string
+	EncryptCtr   uint32
+	DecryptCtr   uint32
+	UserKey      string
+}
+
 type Command interface {
 	GetOp() string
 }
 
-type CmdLoginFirst struct {
+type CmdLogin struct {
 	op string
 }
 
-func (c *CmdLoginFirst) GetOp() string {
+func (c *CmdLogin) GetOp() string {
 	return c.op
 }
 

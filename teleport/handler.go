@@ -1,6 +1,8 @@
 package teleport
 
 import (
+	"errors"
+	"gateway/protocol"
 	log "github.com/Sirupsen/logrus"
 	tcp "github.com/delongw/phantom-tcp"
 	"time"
@@ -9,8 +11,12 @@ import (
 type connection struct {
 	conn         *tcp.Conn
 	iv           string
+	iv96str      string
+	encryptCtr   int32
+	decryptCtr   int32
 	userKey      string
 	userKeyIndex int
+	authorized   bool
 }
 
 type Pool struct {
@@ -18,10 +24,22 @@ type Pool struct {
 	unauthorizedConns map[string]*connection
 }
 
+// SetIv set 4 default value
 func (p *Pool) SetIV(uuid string, iv string) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
 	if ok {
 		c.iv = iv
+		// this is actualy copy of protocol/tools.go: func reverse
+		a := []byte(iv)
+		t := len(a) - 1
+		b := make([]byte, t+1)
+		for i := 0; i <= t; i++ {
+			b[i] = a[t-i]
+		}
+		// copy end
+		c.iv96str = string(b)
+		c.encryptCtr = 0
+		c.decryptCtr = 0
 	}
 }
 
@@ -37,6 +55,26 @@ func (p *Pool) SetUserKeyIndex(uuid string, index int) {
 	if ok {
 		c.userKeyIndex = index
 	}
+}
+
+func GetCipherKey(uuid string) (*protocol.CipherKey, error) {
+	c := GlobalPool.conns[uuid]
+	if c == nil {
+		c = GlobalPool.unauthorizedConns[uuid]
+	}
+
+	if c == nil {
+		return &protocol.CipherKey{}, errors.New("unknow this uuid: " + uuid)
+	}
+
+	return &protocol.CipherKey{
+		UserKeyIndex: c.userKeyIndex,
+		IV:           c.iv,
+		Iv96str:      c.iv96str,
+		EncryptCtr:   c.encryptCtr,
+		DecryptCtr:   c.decryptCtr,
+		UserKey:      c.userKey,
+	}, nil
 }
 
 func (p *Pool) Send(uuid string, msg string) {
@@ -80,7 +118,7 @@ func (p *Pool) OnConnect(c *tcp.Conn) bool {
 			}
 		})
 	}
-	p.unauthorizedConns[c.RemoteAddr().String()] = &connection{conn: c}
+	p.unauthorizedConns[c.RemoteAddr().String()] = &connection{conn: c, authorized: false}
 	return true
 }
 
@@ -92,7 +130,10 @@ func (p *Pool) OnMessage(c *tcp.Conn, m []byte) bool {
 			}).Info("runtime error")
 		}
 	}()
-	Dispatch(m, c.RemoteAddr().String())
+	err := Dispatch(m, c.RemoteAddr().String())
+	if err != nil {
+		log.Info(err)
+	}
 	return true
 }
 

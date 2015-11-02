@@ -6,19 +6,26 @@ import (
 	"runtime/debug"
 )
 
-func Dispatch(data []byte, uuid string) {
+func Dispatch(data []byte, uuid string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error(string(debug.Stack()))
 		}
 	}()
 
-	packet, cmd, err := protocol.Parse(data)
-
+	key, err := GetCipherKey(uuid)
 	if err != nil {
-		log.Info("wrong data from teleport")
 		return
 	}
+	packet, cmd, err := protocol.Parse(data, key)
+
+	if err != nil {
+		return
+	}
+
+	//log.Info("---------------")
+	//log.Info(packet)
+	//log.Info(cmd)
 
 	switch cmd.GetOp() {
 	case "1":
@@ -28,4 +35,5 @@ func Dispatch(data []byte, uuid string) {
 	default:
 		log.Info("no handler for this command")
 	}
+	return nil
 }

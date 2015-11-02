@@ -1,11 +1,11 @@
-package command
+package protocol
 
 import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 )
 
-func ExpoundPacket(src []byte) (*Packet, error) {
+func ExpoundPacket(src []byte, ckey *CipherKey) (*Packet, error) {
 	bytes, err := decode(src)
 	p := &Packet{}
 
@@ -22,11 +22,23 @@ func ExpoundPacket(src []byte) (*Packet, error) {
 	p.Version = int(encr & 3)
 
 	if p.Encrypted {
-		//uki := reverse(bytes[3:5])
-		//cnt := Decrypt(bytes[5:])
-		//if !cnt {
-		//return nil, errors.New("content is empty")
-		//}
+		uki := reverse(bytes[3:5])
+		ckey.UserKeyIndex = int(bytes2int(reverse(uki)))
+		cnt, err := Decrypt(bytes[5:], ckey)
+		if err != nil {
+			return nil, err
+		}
+		if p.Version == 0 {
+			p.Addr = uint32(bytes2int(reverse(cnt[0:4])))
+			p.Op = bytes2str(reverse(cnt[4:6]))
+			p.Params = bytes2str(cnt[6:])
+		} else if p.Version == 1 {
+			p.Addr = uint32(bytes2int(reverse(cnt[0:4])))
+			p.SrcCost = int(bytes2int(reverse(cnt[4:5])))
+			p.SrcSeq = int(bytes2int(reverse(cnt[5:6])))
+			p.Op = bytes2str(reverse(cnt[8:10]))
+			p.Params = bytes2str(cnt[10:])
+		}
 	} else {
 		if p.Version == 0 {
 			p.Addr = uint32(bytes2int(reverse(bytes[7:11])))
@@ -53,7 +65,11 @@ func ExpoundPacket(src []byte) (*Packet, error) {
 func ExpoundCommand(p *Packet) (cmd Command, err error) {
 	switch p.Op {
 	case "1":
-		cmd = &CmdLoginFirst{
+		cmd = &CmdLogin{
+			op: p.Op,
+		}
+	case "2":
+		cmd = &CmdLogin{
 			op: p.Op,
 		}
 	}

@@ -2,60 +2,22 @@ package protocol
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"gateway/protocol/command"
 	"strconv"
 )
 
-func Parse(src []byte) (packet *command.Packet, cmd command.Command, err error) {
-	packet, err = command.ExpoundPacket(src)
+func Parse(src []byte, key *CipherKey) (packet *Packet, cmd Command, err error) {
+	packet, err = ExpoundPacket(src, key)
 	if err != nil {
 		return
 	}
-	cmd, err = command.ExpoundCommand(packet)
+	cmd, err = ExpoundCommand(packet)
 	return
 }
 
-func Decrypt(s []byte) (cnt []byte) {
-	ext := len(s) % 16
-	blocks := len(s) / 16
-	//plain := ""
-
-	for i := 0; i < blocks; i++ {
-		//plain += s[i*16:(i+1)*16] ^ iv_str
-	}
-
-	if ext != 0 {
-
-	}
-	return
-}
-
-func Encrypt(p *command.PacketToTeleport, version int) (string, error) {
-	var enc []byte
-	var err error
-
-	if p.Encrypted {
-
-	} else {
-		enc, err = spliceNotEncryptedCmd(p, version)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	fmt.Printf("%X\n", enc)
-
-	base64Enc := base64.StdEncoding.EncodeToString(
-		append(int2byte(uint64((len(enc)+4)/3*4), 2), enc...),
-	)
-	return fmt.Sprintf("%s*", base64Enc), nil
-}
-
-func spliceNotEncryptedCmd(p *command.PacketToTeleport, version int) ([]byte, error) {
+func spliceNotEncryptedCmd(p *PacketToTeleport, version int) ([]byte, error) {
 
 	var enc []byte
 	e := int(version & 3)

@@ -2,7 +2,6 @@ package teleport
 
 import (
 	"gateway/protocol"
-	"gateway/protocol/command"
 	log "github.com/Sirupsen/logrus"
 	"github.com/antonholmquist/jason"
 	"io/ioutil"
@@ -10,7 +9,7 @@ import (
 	"net/url"
 )
 
-func Post2Rails(packet *command.Packet, uuid string) {
+func Post2Rails(packet *protocol.Packet, uuid string) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Info("post to rails got error")
@@ -83,7 +82,7 @@ func handleRailsControl(uuid string, ctrl *jason.Object) {
 }
 
 func handleRailsCommand(uuid string, version int, cmd *jason.Object) {
-	p := &command.PacketToTeleport{}
+	p := &protocol.PacketToTeleport{}
 	addr, _ := cmd.GetInt64("device_addr")
 	p.DeviceAddr = uint16(addr)
 
