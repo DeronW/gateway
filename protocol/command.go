@@ -1,20 +1,18 @@
 package protocol
 
 import (
-	"errors"
+	//"errors"
 	log "github.com/Sirupsen/logrus"
 )
 
 func ExpoundPacket(src []byte, ckey *CipherKey) (*Packet, error) {
-	bytes, err := decode(src)
 	p := &Packet{}
-
-	p.size = int(bytes[0]) + int(bytes[1]<<7) + 1
-	if p.size != len(bytes) {
-		err = errors.New("packet bytes ivalid, length not matched")
+	bytes, err := decode(src)
+	if err != nil {
 		return p, err
 	}
 
+	p.size = int(bytes[0]) + int(bytes[1]<<7) + 1
 	encr := bytes[2]
 
 	p.Encrypted = (encr&128 != 0)
@@ -30,27 +28,26 @@ func ExpoundPacket(src []byte, ckey *CipherKey) (*Packet, error) {
 		}
 		if p.Version == 0 {
 			p.Addr = uint32(bytes2int(reverse(cnt[0:4])))
-			p.Op = bytes2str(reverse(cnt[4:6]))
+			p.Op = parseOp(reverse(cnt[4:6]))
 			p.Params = bytes2str(cnt[6:])
 		} else if p.Version == 1 {
 			p.Addr = uint32(bytes2int(reverse(cnt[0:4])))
 			p.SrcCost = int(bytes2int(reverse(cnt[4:5])))
 			p.SrcSeq = int(bytes2int(reverse(cnt[5:6])))
-			p.Op = bytes2str(reverse(cnt[8:10]))
+			p.Op = parseOp(reverse(cnt[8:10]))
 			p.Params = bytes2str(cnt[10:])
 		}
 	} else {
 		if p.Version == 0 {
 			p.Addr = uint32(bytes2int(reverse(bytes[7:11])))
-			p.Op = bytes2str(reverse(bytes[11:12]))
+			p.Op = parseOp(reverse(bytes[11:12]))
 			p.Params = bytes2str(reverse(bytes[17:]))
 		} else if p.Version == 1 {
 			p.Addr = uint32(bytes2int(reverse(bytes[7:11])))
 			p.SrcCost = int(bytes2int(reverse(bytes[11:12])))
 			p.SrcSeq = int(bytes2int(reverse(bytes[12:13])))
 			p.cmdLength = int(bytes2int(reverse(bytes[13:15])))
-			p.Op = bytes2str(reverse(bytes[15:17]))
-			// here, should reverse params, but BUG is: it has not do this.
+			p.Op = parseOp(reverse(bytes[15:17]))
 			p.Params = bytes2str(bytes[17 : 17+p.cmdLength-2])
 		}
 	}

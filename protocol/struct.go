@@ -45,10 +45,11 @@ func (p *Packet) ToRailsURLValues() url.Values {
 type CipherKey struct {
 	UserKeyIndex int
 	IV           string
-	Iv96str      string
+	IvChr        string
+	Iv96str      []byte
 	EncryptCtr   uint32
 	DecryptCtr   uint32
-	UserKey      string
+	UserKey      []byte
 }
 
 type Command interface {
@@ -62,17 +63,3 @@ type CmdLogin struct {
 func (c *CmdLogin) GetOp() string {
 	return c.op
 }
-
-//type CmdLoginSecond struct {
-//op                 int
-//encrypted          bool
-//wireless_encrypted bool
-//addr               int
-//params             string
-//}
-
-//type CmdLoginControl struct {
-//set_iv             string
-//set_user_key       string
-//set_user_key_index string
-//}

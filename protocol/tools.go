@@ -5,11 +5,10 @@ import (
 	"fmt"
 )
 
-func decode(src []byte) (dst []byte, err error) {
-	//return base64.StdEncoding.DecodeString(string(s))
-	dst = make([]byte, len(src))
-	_, err = base64.StdEncoding.Decode(dst, src)
-	return
+func decode(src []byte) ([]byte, error) {
+	dst := make([]byte, len(src))
+	size, err := base64.StdEncoding.Decode(dst, src)
+	return dst[:size], err
 }
 
 func reverse(a []byte) []byte {
@@ -32,11 +31,12 @@ func bytes2int(a []byte) (s int64) {
 }
 
 func bytes2str(a []byte) (s string) {
+	return fmt.Sprintf("%X", a)
+}
+
+func parseOp(a []byte) string {
 	if bytes2int(a) == 1 {
 		return "1"
 	}
-	for i := range a {
-		s += fmt.Sprintf("%X", a[i])
-	}
-	return s
+	return string(a[0]) + string(a[1])
 }

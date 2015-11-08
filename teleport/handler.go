@@ -5,16 +5,17 @@ import (
 	"gateway/protocol"
 	log "github.com/Sirupsen/logrus"
 	tcp "github.com/delongw/phantom-tcp"
+	"strconv"
 	"time"
 )
 
 type connection struct {
 	conn         *tcp.Conn
 	iv           string
-	iv96str      string
+	iv96str      []byte
 	encryptCtr   int32
 	decryptCtr   int32
-	userKey      string
+	userKey      []byte
 	userKeyIndex int
 	authorized   bool
 }
@@ -25,25 +26,20 @@ type Pool struct {
 }
 
 // SetIv set 4 default value
-func (p *Pool) SetIV(uuid string, iv string) {
+func (p *Pool) SetIV(uuid string, iv string, iv_chr string) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
 	if ok {
 		c.iv = iv
-		// this is actualy copy of protocol/tools.go: func reverse
-		a := []byte(iv)
-		t := len(a) - 1
-		b := make([]byte, t+1)
-		for i := 0; i <= t; i++ {
-			b[i] = a[t-i]
+		for i := 0; i < len(iv_chr) && i < 24; i += 2 {
+			b, _ := strconv.ParseInt(iv_chr[i:i+2], 16, 16)
+			c.iv96str = append(c.iv96str, byte(b))
 		}
-		// copy end
-		c.iv96str = string(b)
 		c.encryptCtr = 0
 		c.decryptCtr = 0
 	}
 }
 
-func (p *Pool) SetUserKey(uuid string, uk string) {
+func (p *Pool) SetUserKey(uuid string, uk []byte) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
 	if ok {
 		c.userKey = uk
@@ -71,8 +67,8 @@ func GetCipherKey(uuid string) (*protocol.CipherKey, error) {
 		UserKeyIndex: c.userKeyIndex,
 		IV:           c.iv,
 		Iv96str:      c.iv96str,
-		EncryptCtr:   c.encryptCtr,
-		DecryptCtr:   c.decryptCtr,
+		EncryptCtr:   uint32(c.encryptCtr),
+		DecryptCtr:   uint32(c.decryptCtr),
 		UserKey:      c.userKey,
 	}, nil
 }
@@ -130,7 +126,10 @@ func (p *Pool) OnMessage(c *tcp.Conn, m []byte) bool {
 			}).Info("runtime error")
 		}
 	}()
-	err := Dispatch(m, c.RemoteAddr().String())
+
+	// Well!!! HERE, last chr of value m is *, so ignore it
+	//err := Dispatch(m, c.RemoteAddr().String())
+	err := Dispatch(m[:len(m)-1], c.RemoteAddr().String())
 	if err != nil {
 		log.Info(err)
 	}

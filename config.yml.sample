@@ -1,6 +1,8 @@
 
 sentry_dsn: "..."
 
+hash_public_key: "..."
+
 tcp:
     host: "0.0.0.0"
     port: 6000

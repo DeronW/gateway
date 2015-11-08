@@ -65,14 +65,15 @@ func post2rails(v url.Values, fn func(bytes []byte)) {
 
 func handleRailsControl(uuid string, ctrl *jason.Object) {
 	iv, err := ctrl.GetValue("SET_IV")
+	iv_chr, err := ctrl.GetString("SET_IV_CHR")
 	if err == nil {
 		iv, _ := iv.Number()
-		GlobalPool.SetIV(uuid, string(iv))
+		GlobalPool.SetIV(uuid, string(iv), iv_chr)
 	}
 
 	uk, err := ctrl.GetString("SET_USER_KEY")
 	if err == nil {
-		GlobalPool.SetUserKey(uuid, uk)
+		GlobalPool.SetUserKey(uuid, []byte(uk))
 	}
 
 	uki, err := ctrl.GetInt64("SET_USER_KEY_INDEX")

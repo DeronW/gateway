@@ -23,10 +23,6 @@ func Dispatch(data []byte, uuid string) (err error) {
 		return
 	}
 
-	//log.Info("---------------")
-	//log.Info(packet)
-	//log.Info(cmd)
-
 	switch cmd.GetOp() {
 	case "1":
 		Post2Rails(packet, uuid)
