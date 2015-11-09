@@ -66,7 +66,7 @@ func decryptIvStr(ckey *CipherKey) []byte {
 	b_buf := bytes.NewBuffer([]byte{})
 	binary.Write(b_buf, binary.LittleEndian, ckey.DecryptCtr)
 
-	block.Decrypt(out, append(ckey.Iv96str, b_buf.Bytes()...))
+	block.Encrypt(out, append(ckey.Iv96str, b_buf.Bytes()...))
 
 	if ckey.DecryptCtr == 0 {
 		ckey.DecryptCtr = 1<<32 - 1
@@ -115,7 +115,7 @@ func calculate_hash(src []byte) (out []byte) {
 		for j := 0; j < 16; j++ {
 			t = append(t, src[j]^out[j])
 		}
-		block.Decrypt(out, t)
+		block.Encrypt(out, t)
 	}
 	return out[0:2]
 }
