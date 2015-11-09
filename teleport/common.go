@@ -7,9 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
-func Post2Rails(packet *protocol.Packet, uuid string) {
+func Post2RailsLoginCmd(packet *protocol.Packet, uuid string) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Info("post to rails got error")
@@ -18,15 +19,14 @@ func Post2Rails(packet *protocol.Packet, uuid string) {
 	}()
 
 	if packet.Op == "1" {
-		go post2rails(packet.ToRailsURLValues(), func(bytes []byte) {
-			data, _ := jason.NewObjectFromBytes(bytes)
+		go post2rails(packet.ToRailsURLValues(), func(body []byte) {
+			data, _ := jason.NewObjectFromBytes(body)
 			e, _ := data.GetObject("error")
 			if e != nil {
 				log.Info(e)
 				return
 			}
 
-			log.Info(data)
 			ctrl, err := data.GetObject("control")
 			if err == nil {
 				handleRailsControl(uuid, ctrl)
@@ -37,11 +37,24 @@ func Post2Rails(packet *protocol.Packet, uuid string) {
 				handleRailsCommand(uuid, packet.Version, cmd)
 			}
 		})
-	} else if packet.Op == "2" {
+	} else if packet.Op == "3" {
+		go post2rails(packet.ToRailsURLValues(), func(body []byte) {
+			data, _ := jason.NewObjectFromBytes(body)
+			e, _ := data.GetObject("error")
+			if e != nil {
+				log.Info(e)
+				return
+			}
+
+			ctrl, err := data.GetObject("control")
+			if err == nil {
+				handleRailsControl(uuid, ctrl)
+			}
+		})
 	}
 }
 
-func post2rails(v url.Values, fn func(bytes []byte)) {
+func post2rails(v url.Values, fn func(body []byte)) {
 	resp, err := http.PostForm(RailsPostUrl, v)
 	if err != nil {
 		return
@@ -73,12 +86,22 @@ func handleRailsControl(uuid string, ctrl *jason.Object) {
 
 	uk, err := ctrl.GetString("SET_USER_KEY")
 	if err == nil {
-		GlobalPool.SetUserKey(uuid, []byte(uk))
+		buk := make([]byte, 0, 16)
+		for i := 0; i < 32; i += 2 {
+			b, _ := strconv.ParseInt(uk[i:i+2], 16, 16)
+			buk = append(buk, byte(b))
+		}
+		GlobalPool.SetUserKey(uuid, buk)
 	}
 
 	uki, err := ctrl.GetInt64("SET_USER_KEY_INDEX")
 	if err == nil {
 		GlobalPool.SetUserKeyIndex(uuid, int(uki))
+	}
+
+	addr, err := ctrl.GetInt64("SET_TELEPORT_ADDR")
+	if err == nil {
+		GlobalPool.SetTeleportAddr(uuid, addr)
 	}
 }
 

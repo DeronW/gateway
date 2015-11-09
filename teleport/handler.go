@@ -53,6 +53,10 @@ func (p *Pool) SetUserKeyIndex(uuid string, index int) {
 	}
 }
 
+func (p *Pool) SetTeleportAddr(uuid string, addr int64) {
+
+}
+
 func GetCipherKey(uuid string) (*protocol.CipherKey, error) {
 	c := GlobalPool.conns[uuid]
 	if c == nil {

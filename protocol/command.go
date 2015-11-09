@@ -54,7 +54,7 @@ func ExpoundPacket(src []byte, ckey *CipherKey) (*Packet, error) {
 
 	log.WithFields(log.Fields{
 		"packet": p,
-	}).Info("find a packet")
+	}).Info("receive a packet")
 
 	return p, nil
 }
@@ -65,10 +65,14 @@ func ExpoundCommand(p *Packet) (cmd Command, err error) {
 		cmd = &CmdLogin{
 			op: p.Op,
 		}
-	case "2":
+	case "3":
 		cmd = &CmdLogin{
 			op: p.Op,
 		}
 	}
+
+	log.WithFields(log.Fields{
+		"command": cmd,
+	}).Info("parse a command")
 	return
 }

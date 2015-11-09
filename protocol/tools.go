@@ -35,8 +35,11 @@ func bytes2str(a []byte) (s string) {
 }
 
 func parseOp(a []byte) string {
-	if bytes2int(a) == 1 {
+	n := bytes2int(a)
+	if n == 1 {
 		return "1"
+	} else if n == 3 {
+		return "3"
 	}
 	return string(a[0]) + string(a[1])
 }
