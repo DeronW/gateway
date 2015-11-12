@@ -15,6 +15,7 @@ func Run(cfg *tcp.ServerConfig, autoCloseConnection time.Duration, railsPostUrl 
 	GlobalPool = &Pool{
 		conns:             make(map[string]*connection, 1000),
 		unauthorizedConns: make(map[string]*connection, 1000),
+		addrs:             make(map[int64]string, 1000),
 	}
 
 	AutoCloseConnection = autoCloseConnection

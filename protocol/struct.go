@@ -20,7 +20,7 @@ type Packet struct {
 }
 
 type PacketToTeleport struct {
-	DeviceAddr        uint16
+	DeviceAddr        uint32
 	Encrypted         bool
 	Op                uint8
 	Params            string

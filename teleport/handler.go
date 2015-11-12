@@ -23,6 +23,7 @@ type connection struct {
 type Pool struct {
 	conns             map[string]*connection
 	unauthorizedConns map[string]*connection
+	addrs             map[int64]string
 }
 
 // SetIv set 4 default value
@@ -54,7 +55,7 @@ func (p *Pool) SetUserKeyIndex(uuid string, index int) {
 }
 
 func (p *Pool) SetTeleportAddr(uuid string, addr int64) {
-
+	GlobalPool.addrs[addr] = uuid
 }
 
 func GetCipherKey(uuid string) (*protocol.CipherKey, error) {

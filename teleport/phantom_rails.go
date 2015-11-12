@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func Post2RailsLoginCmd(packet *protocol.Packet, uuid string) {
+func Post2RailsLoginCmd(packet *protocol.Packet, uuid string, ckey *protocol.CipherKey) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Info("post to rails got error")
@@ -18,7 +18,7 @@ func Post2RailsLoginCmd(packet *protocol.Packet, uuid string) {
 		}
 	}()
 
-	if packet.Op == "1" {
+	if packet.Op == "1" || packet.Op == "3" {
 		go post2rails(packet.ToRailsURLValues(), func(body []byte) {
 			data, _ := jason.NewObjectFromBytes(body)
 			e, _ := data.GetObject("error")
@@ -34,24 +34,14 @@ func Post2RailsLoginCmd(packet *protocol.Packet, uuid string) {
 
 			cmd, err := data.GetObject("command")
 			if err == nil {
-				handleRailsCommand(uuid, packet.Version, cmd)
-			}
-		})
-	} else if packet.Op == "3" {
-		go post2rails(packet.ToRailsURLValues(), func(body []byte) {
-			data, _ := jason.NewObjectFromBytes(body)
-			e, _ := data.GetObject("error")
-			if e != nil {
-				log.Info(e)
-				return
-			}
-
-			ctrl, err := data.GetObject("control")
-			if err == nil {
-				handleRailsControl(uuid, ctrl)
+				handleRailsCommand(uuid, packet.Version, cmd, ckey)
 			}
 		})
 	}
+}
+
+func Post2RailsGatewayOnline() {
+	//post2rails({}, func(){})
 }
 
 func post2rails(v url.Values, fn func(body []byte)) {
@@ -105,10 +95,10 @@ func handleRailsControl(uuid string, ctrl *jason.Object) {
 	}
 }
 
-func handleRailsCommand(uuid string, version int, cmd *jason.Object) {
+func handleRailsCommand(uuid string, version int, cmd *jason.Object, ckey *protocol.CipherKey) {
 	p := &protocol.PacketToTeleport{}
 	addr, _ := cmd.GetInt64("device_addr")
-	p.DeviceAddr = uint16(addr)
+	p.DeviceAddr = uint32(addr)
 
 	p.Encrypted, _ = cmd.GetBoolean("encrypted")
 
@@ -117,7 +107,7 @@ func handleRailsCommand(uuid string, version int, cmd *jason.Object) {
 	p.Params, _ = cmd.GetString("params")
 	p.WirelessEncrypted, _ = cmd.GetBoolean("w_encrypted")
 
-	enc, err := protocol.Encrypt(p, version)
+	enc, err := protocol.Encrypt(p, version, ckey)
 
 	if err != nil {
 		log.Error(err)

@@ -13,11 +13,11 @@ func Dispatch(data []byte, uuid string) (err error) {
 		}
 	}()
 
-	key, err := GetCipherKey(uuid)
+	ckey, err := GetCipherKey(uuid)
 	if err != nil {
 		return
 	}
-	packet, cmd, err := protocol.Parse(data, key)
+	packet, cmd, err := protocol.Parse(data, ckey)
 
 	if err != nil {
 		return
@@ -25,7 +25,7 @@ func Dispatch(data []byte, uuid string) (err error) {
 
 	switch cmd.GetOp() {
 	case "1", "3":
-		Post2RailsLoginCmd(packet, uuid)
+		Post2RailsLoginCmd(packet, uuid, ckey)
 	case "2", "4":
 		//
 	default:
