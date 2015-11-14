@@ -28,6 +28,8 @@ func Dispatch(data []byte, uuid string) (err error) {
 		Post2RailsLoginCmd(packet, uuid, ckey)
 	case "2", "4":
 		//
+	case "qt":
+		log.Info("return time")
 	default:
 		log.Info("no handler for this command")
 	}

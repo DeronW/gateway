@@ -10,14 +10,9 @@ import (
 )
 
 type connection struct {
-	conn         *tcp.Conn
-	iv           string
-	iv96str      []byte
-	encryptCtr   int32
-	decryptCtr   int32
-	userKey      []byte
-	userKeyIndex int
-	authorized   bool
+	conn       *tcp.Conn
+	cipher_key *protocol.CipherKey
+	authorized bool
 }
 
 type Pool struct {
@@ -30,27 +25,28 @@ type Pool struct {
 func (p *Pool) SetIV(uuid string, iv string, iv_chr string) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
 	if ok {
-		c.iv = iv
+		ckey := c.cipher_key
+		ckey.IV = iv
 		for i := 0; i < len(iv_chr) && i < 24; i += 2 {
 			b, _ := strconv.ParseInt(iv_chr[i:i+2], 16, 16)
-			c.iv96str = append(c.iv96str, byte(b))
+			ckey.Iv96str = append(ckey.Iv96str, byte(b))
 		}
-		c.encryptCtr = 0
-		c.decryptCtr = 0
+		ckey.EncryptCtr = 0
+		ckey.DecryptCtr = 0
 	}
 }
 
 func (p *Pool) SetUserKey(uuid string, uk []byte) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
 	if ok {
-		c.userKey = uk
+		c.cipher_key.UserKey = uk
 	}
 }
 
 func (p *Pool) SetUserKeyIndex(uuid string, index int) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
 	if ok {
-		c.userKeyIndex = index
+		c.cipher_key.UserKeyIndex = index
 	}
 }
 
@@ -67,15 +63,7 @@ func GetCipherKey(uuid string) (*protocol.CipherKey, error) {
 	if c == nil {
 		return &protocol.CipherKey{}, errors.New("unknow this uuid: " + uuid)
 	}
-
-	return &protocol.CipherKey{
-		UserKeyIndex: c.userKeyIndex,
-		IV:           c.iv,
-		Iv96str:      c.iv96str,
-		EncryptCtr:   uint32(c.encryptCtr),
-		DecryptCtr:   uint32(c.decryptCtr),
-		UserKey:      c.userKey,
-	}, nil
+	return c.cipher_key, nil
 }
 
 func (p *Pool) Send(uuid string, msg string) {
@@ -119,7 +107,11 @@ func (p *Pool) OnConnect(c *tcp.Conn) bool {
 			}
 		})
 	}
-	p.unauthorizedConns[c.RemoteAddr().String()] = &connection{conn: c, authorized: false}
+	p.unauthorizedConns[c.RemoteAddr().String()] = &connection{
+		conn:       c,
+		cipher_key: &protocol.CipherKey{},
+		authorized: false,
+	}
 	return true
 }
 

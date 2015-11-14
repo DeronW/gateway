@@ -80,7 +80,7 @@ func str2byte(s string) ([]byte, error) {
 	return b, nil
 }
 func parseOp(a []byte) string {
-	n := bytes2int(a)
+	n := bytes2int(reverse(a))
 	if n == 1 {
 		return "1"
 	} else if n == 3 {
