@@ -92,19 +92,18 @@ func removeHash(src []byte) ([]byte, error) {
 	}
 }
 
-func calculate_hash(src []byte) (out []byte) {
-	//PublicKey1 := "\x08\x9a\x84\xc5\xa6\xd1\x32\x66\xc4\x9a\xf8\x14\x11\x6e\x63\x13"
-	PublicKey1 := []byte{0x08, 0x9a, 0x84, 0xc5, 0xa6, 0xd1, 0x32, 0x66, 0xc4, 0x9a, 0xf8, 0x14, 0x11, 0x6e, 0x63, 0x13}
+func calculate_hash(src []byte) []byte {
+	PublicKey1 := "\x08\x9a\x84\xc5\xa6\xd1\x32\x66\xc4\x9a\xf8\x14\x11\x6e\x63\x13"
 	block, _ := aes.NewCipher([]byte(PublicKey1))
 
 	src = append([]byte{0x00, 0x00}, src...)
 	src = padding16(src, 0x00)
 
-	out = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	out := make([]byte, 16)
 	for i := 0; i < len(src)/16; i++ {
-		t := make([]byte, 0, 16)
+		t := make([]byte, 16)
 		for j := 0; j < 16; j++ {
-			t = append(t, src[j]^out[j])
+			t[j] = src[i*16+j] ^ out[j]
 		}
 		block.Encrypt(out, t)
 	}
