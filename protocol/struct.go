@@ -22,9 +22,9 @@ type Packet struct {
 type PacketToTeleport struct {
 	DeviceAddr        uint32
 	Encrypted         bool
+	WirelessEncrypted bool
 	Op                uint8
 	Params            string
-	WirelessEncrypted bool
 }
 
 func (p *Packet) ToRailsURLValues() url.Values {

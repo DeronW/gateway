@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	//log "github.com/Sirupsen/logrus"
 )
 
 func Decrypt(secret []byte, ckey *CipherKey) (cnt []byte, err error) {

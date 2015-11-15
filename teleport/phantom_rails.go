@@ -106,7 +106,15 @@ func handleRailsCommand(uuid string, version int, cmd *jason.Object, ckey *proto
 	p.Op = uint8(op)
 	p.Params, _ = cmd.GetString("params")
 	p.WirelessEncrypted, _ = cmd.GetBoolean("w_encrypted")
+	send2teleport(uuid, version, p, ckey)
+}
 
+func send2teleport(uuid string, version int, p *protocol.PacketToTeleport, ckey *protocol.CipherKey) {
+	log.WithFields(log.Fields{
+		"uuid":    uuid,
+		"version": version,
+		"packet":  p,
+	}).Info("send to teleport")
 	enc, err := protocol.Encrypt(p, version, ckey)
 
 	if err != nil {

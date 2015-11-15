@@ -36,6 +36,17 @@ func (p *Pool) SetIV(uuid string, iv string, iv_chr string) {
 	}
 }
 
+func (p *Pool) SetIV2(uuid string, iv []byte) {
+	c, ok := GlobalPool.unauthorizedConns[uuid]
+	if ok {
+		ckey := c.cipher_key
+		ckey.IV = "not used field"
+		ckey.Iv96str = iv[:12]
+		ckey.EncryptCtr = 0
+		ckey.DecryptCtr = 0
+	}
+}
+
 func (p *Pool) SetUserKey(uuid string, uk []byte) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
 	if ok {
@@ -68,10 +79,6 @@ func GetCipherKey(uuid string) (*protocol.CipherKey, error) {
 
 func (p *Pool) Send(uuid string, msg string) {
 	c, ok := GlobalPool.unauthorizedConns[uuid]
-	log.WithFields(log.Fields{
-		"message": msg,
-	}).Info("send to teleport")
-
 	if ok {
 		timeout := time.Second * 5 //  time.Duration
 		err := c.conn.Write([]byte(msg), timeout)

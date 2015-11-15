@@ -1,2 +1,3 @@
 gateway
 *.yml
+*private_keys.go
