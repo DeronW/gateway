@@ -31,14 +31,14 @@ func Decrypt(secret []byte, ckey *CipherKey) (cnt []byte, err error) {
 	return
 }
 
-func Encrypt(p *PacketToTeleport, version int, ckey *CipherKey) (string, error) {
+func Encrypt(p *PacketSend, ckey *CipherKey) (string, error) {
 	var enc []byte
 	var err error
 
 	if p.Encrypted {
-		enc, err = spliceEncryptedCmd(p, version, ckey)
+		enc, err = spliceEncryptedCmd(p, ckey)
 	} else {
-		enc, err = spliceNotEncryptedCmd(p, version)
+		enc, err = spliceNotEncryptedCmd(p)
 	}
 
 	if err != nil {
@@ -109,10 +109,10 @@ func calculate_hash(src []byte) []byte {
 	return out[0:2]
 }
 
-func spliceEncryptedCmd(p *PacketToTeleport, version int, ckey *CipherKey) (enc []byte, err error) {
+func spliceEncryptedCmd(p *PacketSend, ckey *CipherKey) (enc []byte, err error) {
 
 	var src []byte
-	if version == 0 {
+	if p.Version == 0 {
 		src = append(src, int2byte(uint64(p.DeviceAddr), 4)...)
 		src = append(src, int2byte(uint64(p.Op), 2)...)
 		src = append(src, params_size_v0(p.Params)...)
@@ -121,7 +121,7 @@ func spliceEncryptedCmd(p *PacketToTeleport, version int, ckey *CipherKey) (enc 
 			return enc, err
 		}
 		src = append(src, params...)
-	} else if version == 1 {
+	} else if p.Version == 1 {
 		src = append(src, int2byte(uint64(p.DeviceAddr), 4)...)
 		src = append(src, 0x00, 0x00)
 		src = append(src, params_size_v1(p.Params)...)
@@ -134,7 +134,7 @@ func spliceEncryptedCmd(p *PacketToTeleport, version int, ckey *CipherKey) (enc 
 	} else {
 		return enc, errors.New("Wrong command version")
 	}
-	encryption := int(version&3) + 1<<7
+	encryption := int(p.Version&3) + 1<<7
 	if p.Encrypted {
 		encryption += 1 << 6
 	}
@@ -148,16 +148,16 @@ func spliceEncryptedCmd(p *PacketToTeleport, version int, ckey *CipherKey) (enc 
 	return
 }
 
-func spliceNotEncryptedCmd(p *PacketToTeleport, version int) (enc []byte, err error) {
+func spliceNotEncryptedCmd(p *PacketSend) (enc []byte, err error) {
 
-	e := int(version & 3)
+	e := int(p.Version & 3)
 	if p.WirelessEncrypted {
 		e += 1 << 6
 	}
 
 	enc = append(enc, byte(e))
 
-	if version == 0 {
+	if p.Version == 0 {
 		enc = append(enc, 0x00, 0x00, 0x00, 0x00)
 		enc = append(enc, int2byte(uint64(p.DeviceAddr), 4)...)
 		enc = append(enc, int2byte(uint64(p.Op), 2)...)
@@ -167,7 +167,7 @@ func spliceNotEncryptedCmd(p *PacketToTeleport, version int) (enc []byte, err er
 			return enc, err
 		}
 		enc = append(enc, params...)
-	} else if version == 1 {
+	} else if p.Version == 1 {
 		enc = append(enc, 0x00, 0x00, 0x00, 0x00)
 		enc = append(enc, int2byte(uint64(p.DeviceAddr), 4)...)
 		enc = append(enc, 0x00, 0x00)
