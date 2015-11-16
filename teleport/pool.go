@@ -60,9 +60,11 @@ func (p *Pool) send(uuid string, packet *protocol.PacketSend, ck *protocol.Ciphe
 
 	if ok {
 		err := c.send(packet, ck)
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Info("send to teleport error")
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Info("send to teleport error")
+		}
 	} else {
 		log.WithFields(log.Fields{
 			"uuid": uuid,

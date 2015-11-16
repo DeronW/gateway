@@ -14,15 +14,21 @@ func Dispatch(data []byte, uuid string) (err error) {
 	}()
 
 	ck, _ := GlobalPool.get_cipher_key(uuid)
-	packet, cmd, err := protocol.Parse(data, ck)
+
+	pk, err := protocol.ExpoundPacket(data, ck)
 
 	if err != nil {
+		log.WithFields(log.Fields{
+			"packet": pk,
+			"error":  err,
+		}).Info("expound packet error")
 		return
 	}
 
-	switch cmd.GetOp() {
+	var cmd protocol.Command
+	switch pk.Op {
 	case "1":
-		pack4send, iv, uk, uki := protocol.LoginStepOne(packet, ck)
+		pack4send, iv, uk, uki := protocol.CommandLoginStepOne(pk, ck)
 
 		GlobalPool.set_iv(uuid, iv)
 		GlobalPool.set_user_key(uuid, uk)
@@ -35,12 +41,28 @@ func Dispatch(data []byte, uuid string) (err error) {
 			WirelessEncrypted: true,
 			Op:                4,
 			Params:            "",
-			Version:           packet.Version,
+			Version:           pk.Version,
 		}, ck)
 	case "qt":
 		log.Info("return time")
 	default:
 		log.Info("no handler for this command")
 	}
+
+	if cmd == nil {
+		//handle_command(uuid, cmd, ck)
+	}
 	return nil
+}
+
+func handle_command(uuid string, cmd protocol.Command, ck *protocol.CipherKey) {
+	pk, ok := cmd.GetSendPacket()
+	if ok {
+		GlobalPool.send(uuid, pk, ck)
+	}
+
+	msg, ok := cmd.GetPublishMessage()
+	if ok {
+		log.Info(msg)
+	}
 }
