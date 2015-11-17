@@ -70,7 +70,7 @@ func ExpoundPacket(src []byte, ckey *CipherKey) (*PacketReceive, error) {
 		if p.Version == 0 {
 			p.Addr = uint32(bytes2int(reverse(bytes[7:11])))
 			p.Op = parseOp(bytes[11:12])
-			p.Params = bytes2str(reverse(bytes[17:]))
+			p.Params = bytes2str(reverse(bytes[14:]))
 		} else if p.Version == 1 {
 			p.Addr = uint32(bytes2int(reverse(bytes[7:11])))
 			p.SrcCost = int(bytes2int(reverse(bytes[11:12])))
