@@ -8,7 +8,7 @@ import (
 type PacketReceive struct {
 	Encrypted         bool
 	WirelessEncrypted bool
-	Addr              uint32
+	Addr              int
 	Op                string
 	Params            string
 	UserKeyIndex      uint16
@@ -34,7 +34,7 @@ func (p *PacketReceive) ToRailsURLValues() url.Values {
 	return v
 }
 
-func ExpoundPacket(src []byte, ckey *CipherKey) (*PacketReceive, error) {
+func ExpoundPacketReceive(src []byte, ckey *CipherKey) (*PacketReceive, error) {
 	p := &PacketReceive{}
 	bytes, err := decode(src)
 	if err != nil {
@@ -50,32 +50,32 @@ func ExpoundPacket(src []byte, ckey *CipherKey) (*PacketReceive, error) {
 
 	if p.Encrypted {
 		uki := reverse(bytes[3:5])
-		ckey.UserKeyIndex = int(bytes2int(reverse(uki)))
+		ckey.UserKeyIndex = bytes2int(reverse(uki))
 		cnt, err := Decrypt(bytes[5:], ckey)
 		if err != nil {
 			return nil, err
 		}
 		if p.Version == 0 {
-			p.Addr = uint32(bytes2int(reverse(cnt[0:4])))
+			p.Addr = bytes2int(reverse(cnt[0:4]))
 			p.Op = parseOp(cnt[4:6])
 			p.Params = bytes2str(cnt[6:])
 		} else if p.Version == 1 {
-			p.Addr = uint32(bytes2int(reverse(cnt[0:4])))
-			p.SrcCost = int(bytes2int(reverse(cnt[4:5])))
-			p.SrcSeq = int(bytes2int(reverse(cnt[5:6])))
+			p.Addr = bytes2int(reverse(cnt[0:4]))
+			p.SrcCost = bytes2int(reverse(cnt[4:5]))
+			p.SrcSeq = bytes2int(reverse(cnt[5:6]))
 			p.Op = parseOp(cnt[8:10])
 			p.Params = bytes2str(cnt[10:])
 		}
 	} else {
 		if p.Version == 0 {
-			p.Addr = uint32(bytes2int(reverse(bytes[7:11])))
+			p.Addr = bytes2int(reverse(bytes[7:11]))
 			p.Op = parseOp(bytes[11:12])
 			p.Params = bytes2str(reverse(bytes[14:]))
 		} else if p.Version == 1 {
-			p.Addr = uint32(bytes2int(reverse(bytes[7:11])))
-			p.SrcCost = int(bytes2int(reverse(bytes[11:12])))
-			p.SrcSeq = int(bytes2int(reverse(bytes[12:13])))
-			p.cmdLength = int(bytes2int(reverse(bytes[13:15])))
+			p.Addr = bytes2int(reverse(bytes[7:11]))
+			p.SrcCost = bytes2int(reverse(bytes[11:12]))
+			p.SrcSeq = bytes2int(reverse(bytes[12:13]))
+			p.cmdLength = bytes2int(reverse(bytes[13:15]))
 			p.Op = parseOp(bytes[15:17])
 			p.Params = bytes2str(bytes[17 : 17+p.cmdLength-2])
 		}

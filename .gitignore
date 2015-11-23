@@ -1,3 +1,5 @@
 gateway
+
 *.yml
-*private_keys.go
+*.sqlite3
+*.db

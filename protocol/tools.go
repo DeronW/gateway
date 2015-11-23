@@ -26,12 +26,11 @@ func reverse(a []byte) []byte {
 	return b
 }
 
-func bytes2int(a []byte) (s int64) {
+func bytes2int(a []byte) (s int) {
 	// 最多转换8个byte
 	c := len(a)
 	for i := 0; i < c && i < 8; i++ {
-		t := int(a[i])
-		s += int64(t << (uint(c-i-1) * 8))
+		s += int(a[i]) << (uint(c-i-1) * 8)
 	}
 	return
 }
