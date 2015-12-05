@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"gateway/lib/misc"
 )
 
 func Decrypt(secret []byte, ckey *CipherKey) (cnt []byte, err error) {
@@ -116,7 +117,7 @@ func spliceEncryptedCmd(p *PacketSend, ckey *CipherKey) (enc []byte, err error) 
 		src = append(src, int2byte(uint64(p.DeviceAddr), 4)...)
 		src = append(src, int2byte(uint64(p.Op), 2)...)
 		src = append(src, params_size_v0(p.Params)...)
-		params, err := str2byte(p.Params)
+		params, err := misc.Str2byte(p.Params)
 		if err != nil {
 			return enc, err
 		}
@@ -126,7 +127,7 @@ func spliceEncryptedCmd(p *PacketSend, ckey *CipherKey) (enc []byte, err error) 
 		src = append(src, 0x00, 0x00)
 		src = append(src, params_size_v1(p.Params)...)
 		src = append(src, int2byte(uint64(p.Op), 2)...)
-		params, err := str2byte(p.Params)
+		params, err := misc.Str2byte(p.Params)
 		if err != nil {
 			return enc, err
 		}
@@ -162,7 +163,7 @@ func spliceNotEncryptedCmd(p *PacketSend) (enc []byte, err error) {
 		enc = append(enc, int2byte(uint64(p.DeviceAddr), 4)...)
 		enc = append(enc, int2byte(uint64(p.Op), 2)...)
 		enc = append(enc, params_size_v0(p.Params)...)
-		params, err := str2byte(p.Params)
+		params, err := misc.Str2byte(p.Params)
 		if err != nil {
 			return enc, err
 		}
@@ -174,7 +175,7 @@ func spliceNotEncryptedCmd(p *PacketSend) (enc []byte, err error) {
 		enc = append(enc, params_size_v1(p.Params)...)
 		enc = append(enc, int2byte(uint64(p.Op), 2)...)
 
-		params, err := str2byte(p.Params)
+		params, err := misc.Str2byte(p.Params)
 
 		if err != nil {
 			return enc, err

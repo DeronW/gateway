@@ -4,11 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/binary"
-	"errors"
 	"fmt"
-	"math/rand"
-	"strconv"
-	"time"
 )
 
 func decode(src []byte) ([]byte, error) {
@@ -64,23 +60,6 @@ func int2str(i uint64, size int) string {
 	}
 	return s
 }
-
-func str2byte(s string) ([]byte, error) {
-	var b []byte
-	length := len(s)
-	if length%2 != 0 {
-		return make([]byte, 0), errors.New("params is not odd")
-	}
-	for i := 0; i < length; i += 2 {
-		a, err := strconv.ParseUint(string(s[i:i+2]), 16, 8)
-		if err != nil {
-			return b, err
-		}
-		b = append(b, byte(a))
-	}
-	return b, nil
-}
-
 func parseOp(a []byte) string {
 	n := bytes2int(reverse(a))
 	if n == 1 {
@@ -94,20 +73,4 @@ func parseOp(a []byte) string {
 // padding bytes to multiple of aes.BlockSize(16)
 func padding16(src []byte, b byte) []byte {
 	return append(src, bytes.Repeat([]byte{b}, (16-(len(src)%16))%16)...)
-}
-
-func rand8byte() []byte {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	out := make([]byte, 8)
-	for i := 0; i < 8; i++ {
-		out[i] = byte(r.Int() & 0xff)
-	}
-	return out
-}
-
-func bytes_xor(a []byte, b []byte) (c []byte) {
-	for i := 0; i < len(a); i++ {
-		c = append(c, a[i]^b[i])
-	}
-	return c
 }

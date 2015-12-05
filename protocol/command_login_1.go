@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"fmt"
 	"gateway/db"
+	"gateway/lib/misc"
 )
 
 type Command_login1 struct {
@@ -28,13 +29,11 @@ func CommandLoginSetup(pk *PacketReceive, ck *CipherKey) (
 	user_key_index int,
 ) {
 
-	nonce1, _ := str2byte(pk.Params)
-	nonce2 := rand8byte()
+	nonce1, _ := misc.Str2byte(pk.Params)
+	nonce2 := misc.Rand8byte()
 	nonce := append(nonce1, nonce2...)
-	//private_key, _ := str2byte("55294d59b1f1db94f848fd2364ebc979")
-	ppp, _ := db.GetPrivateKey(pk.Addr)
-	private_key, _ := str2byte(ppp)
-	user_key = append(rand8byte(), rand8byte()...)
+	private_key, _, _ := db.GetPrivateKey(pk.Addr)
+	user_key = append(misc.Rand8byte(), misc.Rand8byte()...)
 	user_key_index = 0
 
 	out := make([]byte, aes.BlockSize)
@@ -46,7 +45,7 @@ func CommandLoginSetup(pk *PacketReceive, ck *CipherKey) (
 		iv[i] = out[i]
 	}
 	encrypted_user_key := make([]byte, 16)
-	block.Encrypt(encrypted_user_key, bytes_xor(user_key, nonce))
+	block.Encrypt(encrypted_user_key, misc.BytesXor(user_key, nonce))
 
 	params := make([]byte, 0, 16)
 	params = append(params, out...)

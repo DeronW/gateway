@@ -2,14 +2,18 @@ package main
 
 import (
 	"fmt"
-	"gateway/common"
+	"gateway/lib/error_handle"
+	"gateway/lib/extra_data"
+	"gateway/lib/holdon"
 	"gateway/teleport"
+	"github.com/codegangsta/cli"
 	tcp "github.com/delongw/phantom-tcp"
 	"github.com/spf13/viper"
+	"os"
 	"time"
 )
 
-func initConfig() {
+func init_config() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("/etc/gateway/")
 	viper.AddConfigPath("$HOME/.gateway/")
@@ -38,7 +42,7 @@ func initConfig() {
 	}
 }
 
-func teleportConfig() *tcp.ServerConfig {
+func teleport_config() *tcp.ServerConfig {
 	return &tcp.ServerConfig{
 		Host:       viper.GetString("tcp.host"),
 		Port:       uint32(viper.GetInt("tcp.port")),
@@ -56,17 +60,68 @@ func teleportConfig() *tcp.ServerConfig {
 	}
 }
 
-func main() {
-
-	initConfig() // this method should be TOP level
-
-	common.SetupRaven(viper.GetString("sentry_dsn"))
-
+func start_server(c *cli.Context) {
+	init_config() // this method should be TOP level
+	error_handle.SetupRaven(viper.GetString("sentry_dsn"))
 	go teleport.Run(
-		teleportConfig(),
+		teleport_config(),
 		viper.GetDuration("keepalive.duration"),
 		viper.GetString("rails.post_url"),
 	)
+	holdon.HoldOn() // in development env, make server blocking
+}
 
-	common.HoldOn() // in development env, make server blocking
+func stop_server(c *cli.Context)    {}
+func restart_server(c *cli.Context) {}
+func server_status(c *cli.Context)  {}
+
+func main() {
+	app := cli.NewApp()
+	app.Name = "Phantom Gateway Server"
+	app.Version = "0.1"
+	app.Usage = "Entrance of IoT"
+	app.Authors = []cli.Author{
+		cli.Author{
+			Name:  "phantom",
+			Email: "delong@huantengsmart.com",
+		},
+	}
+
+	app.Commands = []cli.Command{
+		{
+			Name:   "start",
+			Usage:  "start TCP server",
+			Action: start_server,
+		},
+		{
+			Name:   "stop",
+			Usage:  "stop TCP server",
+			Action: stop_server,
+		},
+		{
+			Name:   "restart",
+			Usage:  "restart TCP server",
+			Action: restart_server,
+		},
+		{
+			Name:   "status",
+			Usage:  "show server status",
+			Action: server_status,
+		},
+		{
+			Name:    "load_teleport_private_key",
+			Aliases: []string{"ltpk"},
+			Usage:   "load private key from csv file",
+			Action: func(c *cli.Context) {
+				path := c.Args().First()
+				if path == "" {
+					println("must supply a file path")
+					return
+				}
+				extra_data.ImportTeleportData(path)
+			},
+		},
+	}
+
+	app.Run(os.Args)
 }

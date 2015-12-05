@@ -1,7 +1,6 @@
-package common
+package error_handle
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
 	"sync"
@@ -28,6 +27,6 @@ func ReportError(err error) {
 func SetupRaven(dsn string) {
 	once.Do(func() {
 		raven.SetDSN(dsn)
-		fmt.Println(raven.CaptureMessage("Device Gateway server starting", nil))
+		raven.CaptureMessage("Device Gateway server starting", nil)
 	})
 }

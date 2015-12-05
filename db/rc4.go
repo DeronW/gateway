@@ -1,10 +1,12 @@
 package db
 
-import (
-//"fmt"
-)
+import ()
 
-var RC4_KEY string = "huantenghuanteng"
+var RC4_KEY string = "huanteng"
+
+func EncryptPrivateKey(src string, key string) []byte {
+	return []byte{}
+}
 
 func DecryptPrivateKey(secret string, key string) []byte {
 

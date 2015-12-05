@@ -1,4 +1,4 @@
-package common
+package error_handle
 
 import (
 	. "github.com/smartystreets/goconvey/convey"
