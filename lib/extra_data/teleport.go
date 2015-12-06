@@ -67,18 +67,3 @@ func insert_row(record []string) error {
 	}
 	return nil
 }
-
-//func rails_private_key_to_bytes(s string) (string, error) {
-//if len(s) != 32 {
-//return "", errors.New("wrong private, lenght is not 32: " + s)
-//}
-//var b []byte
-//for i := 0; i < 32; i += 2 {
-//a, err := strconv.ParseUint(string(s[i:i+2]), 16, 8)
-//if err != nil {
-//return "", err
-//}
-//b = append(b, byte(a))
-//}
-//return fmt.Sprintf("%X", b), nil
-//}

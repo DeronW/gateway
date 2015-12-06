@@ -10,9 +10,12 @@ import (
 
 // 最多转换8个byte
 func Bytes2int(a []byte) (s int) {
-	c := len(a)
-	for i := 0; i < c && i < 8; i++ {
-		s += int(a[i]) << (uint(c-i-1) * 8)
+	len_a := len(a)
+	if len_a > 8 {
+		len_a = 8
+	}
+	for i := 0; i < len_a; i++ {
+		s += int(a[i]) << (uint(len_a-i-1) * 8)
 	}
 	return
 }

@@ -17,6 +17,7 @@ keepalive:
     interval: 13
     duration: 60
 
+sqlite3: "/home/delong/phantom-go/src/gateway/sqlite3.db"
 
 rails:
     post_url: "http://127.0.0.1/tcp/command"

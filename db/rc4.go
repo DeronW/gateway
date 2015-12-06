@@ -1,22 +1,25 @@
 package db
 
-import ()
+import (
+	"errors"
+	"fmt"
+	"gateway/lib/misc"
+)
 
 var RC4_KEY string = "huanteng"
 
-func EncryptPrivateKey(src string, key string) []byte {
-	return []byte{}
+func encrypt_private_key(private_key string) string {
+	rand_key := misc.Rand8byte()
+	key_bytes, _ := misc.Str2byte(private_key)
+	secret := misc.Rc4xor(key_bytes, misc.BytesXor(rand_key, []byte(RC4_KEY)))
+	return fmt.Sprintf("%X", append(rand_key, secret...))
 }
 
-func DecryptPrivateKey(secret string, key string) []byte {
-
-	key += "0000000000000000"
-	key_a := []byte(key[:16])
-	key_b := []byte("huantenghuanteng")
-
-	k := make([]byte, 16)
-	for i := 0; i < 16; i++ {
-		k[i] = key_a[i] ^ key_b[i]
+func decrypt_private_key(ekey string) ([]byte, error) {
+	if len(ekey) != 48 {
+		return nil, errors.New("illegal encrypted private key: " + ekey)
 	}
-	return []byte{}
+	rand_key, _ := misc.Str2byte(ekey[:16])
+	secret, _ := misc.Str2byte(ekey[16:])
+	return misc.Rc4xor(secret, misc.BytesXor(rand_key, []byte(RC4_KEY))), nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gateway/db"
 	"gateway/lib/error_handle"
 	"gateway/lib/extra_data"
 	"gateway/lib/holdon"
@@ -62,6 +63,7 @@ func teleport_config() *tcp.ServerConfig {
 
 func start_server(c *cli.Context) {
 	init_config() // this method should be TOP level
+	db.SetSqlite3Path(viper.GetString("sqlite3"))
 	error_handle.SetupRaven(viper.GetString("sentry_dsn"))
 	go teleport.Run(
 		teleport_config(),
@@ -119,6 +121,8 @@ func main() {
 					println("must supply a file path")
 					return
 				}
+
+				db.SetSqlite3Path(viper.GetString("sqlite3"))
 				extra_data.ImportTeleportData(path)
 			},
 		},
