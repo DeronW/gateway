@@ -10,11 +10,15 @@ var GlobalPool *Pool
 var AutoCloseConnection time.Duration
 var RailsPostUrl string
 
-func Run(cfg *tcp.ServerConfig, autoCloseConnection time.Duration, railsPostUrl string) {
+func Run(cfg *tcp.ServerConfig,
+	autoCloseConnection time.Duration,
+	railsPostUrl string,
+	redis_pubsub bool,
+) {
 	GlobalPool = &Pool{
-		conns:             make(map[string]*connection, 1000),
-		unauthorizedConns: make(map[string]*connection, 1000),
-		addrs:             make(map[int64]string, 1000),
+		conns:              make(map[string]*connection, 1000),
+		unauthorized_conns: make(map[string]*connection, 1000),
+		addrs:              make(map[int]string, 1000),
 	}
 
 	AutoCloseConnection = autoCloseConnection

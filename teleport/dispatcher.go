@@ -32,14 +32,13 @@ func Dispatch(data []byte, uuid string) (err error) {
 	case "1":
 		c, iv, uk, uki := protocol.CommandLoginSetup(pk, ck)
 		cmd = c
-
 		GlobalPool.set_iv(uuid, iv)
 		GlobalPool.set_user_key(uuid, uk)
 		GlobalPool.set_user_key_index(uuid, uki)
-
-		//GlobalPool.send(uuid, pack4send, ck)
+		GlobalPool.set_teleport_addr(uuid, pk.Addr)
 	case "3":
 		cmd = &protocol.Command_login3{protocol.CommandBase{pk}}
+		GlobalPool.authorize(uuid)
 	case "qt":
 		log.Info("return time")
 	default:
@@ -49,6 +48,9 @@ func Dispatch(data []byte, uuid string) (err error) {
 	if cmd != nil {
 		handle_command(uuid, cmd, ck)
 	}
+
+	teleport, _ := GlobalPool.get_teleport_addr(uuid)
+	publish_packet(teleport, pk)
 	return nil
 }
 

@@ -21,7 +21,7 @@ func (p *Pool) OnConnect(c *tcp.Conn) bool {
 			}
 		})
 	}
-	p.unauthorizedConns[c.RemoteAddr().String()] = &connection{
+	p.unauthorized_conns[c.RemoteAddr().String()] = &connection{
 		conn:       c,
 		cipher_key: &protocol.CipherKey{},
 		authorized: false,

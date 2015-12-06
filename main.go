@@ -67,6 +67,7 @@ func start_server(c *cli.Context) {
 		teleport_config(),
 		viper.GetDuration("keepalive.duration"),
 		viper.GetString("rails.post_url"),
+		false,
 	)
 	holdon.HoldOn() // in development env, make server blocking
 }

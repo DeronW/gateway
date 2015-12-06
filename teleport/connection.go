@@ -10,6 +10,7 @@ type connection struct {
 	conn       *tcp.Conn
 	cipher_key *protocol.CipherKey
 	authorized bool
+	addr       int
 }
 
 func (c *connection) send(

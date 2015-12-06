@@ -7,14 +7,23 @@ import (
 )
 
 type Pool struct {
-	conns             map[string]*connection
-	unauthorizedConns map[string]*connection
-	addrs             map[int64]string
+	conns              map[string]*connection
+	unauthorized_conns map[string]*connection
+	addrs              map[int]string
+}
+
+func (p *Pool) authorize(uuid string) {
+	c, ok := p.unauthorized_conns[uuid]
+	if ok {
+		delete(p.conns, uuid)
+		p.conns[uuid] = c
+		delete(p.unauthorized_conns, uuid)
+	}
 }
 
 // initial vector
 func (p *Pool) set_iv(uuid string, iv []byte) {
-	c, ok := p.unauthorizedConns[uuid]
+	c, ok := p.unauthorized_conns[uuid]
 	if ok {
 		ck := c.cipher_key
 		ck.IV = "not used field"
@@ -25,21 +34,31 @@ func (p *Pool) set_iv(uuid string, iv []byte) {
 }
 
 func (p *Pool) set_user_key(uuid string, uk []byte) {
-	c, ok := p.unauthorizedConns[uuid]
+	c, ok := p.unauthorized_conns[uuid]
 	if ok {
 		c.cipher_key.UserKey = uk
 	}
 }
 
 func (p *Pool) set_user_key_index(uuid string, index int) {
-	c, ok := p.unauthorizedConns[uuid]
+	c, ok := p.unauthorized_conns[uuid]
 	if ok {
 		c.cipher_key.UserKeyIndex = index
 	}
 }
 
-func (p *Pool) set_teleport_addr(uuid string, addr int64) {
+func (p *Pool) set_teleport_addr(uuid string, addr int) {
 	p.addrs[addr] = uuid
+	c, _ := p.unauthorized_conns[uuid]
+	c.addr = addr
+}
+
+func (p *Pool) get_teleport_addr(uuid string) (int, bool) {
+	c, ok := p.conns[uuid]
+	if ok {
+		return c.addr, true
+	}
+	return 0, false
 }
 
 func (p *Pool) send(uuid string, packet *protocol.PacketSend, ck *protocol.CipherKey) {
@@ -52,8 +71,8 @@ func (p *Pool) send(uuid string, packet *protocol.PacketSend, ck *protocol.Ciphe
 	var ok bool
 	var c *connection
 	// teleport login step
-	if packet.Op == 2 || packet.Op == 4 {
-		c, ok = p.unauthorizedConns[uuid]
+	if packet.Op == 2 { // || packet.Op == 4 {
+		c, ok = p.unauthorized_conns[uuid]
 	} else {
 		c, ok = p.conns[uuid]
 	}
@@ -72,21 +91,30 @@ func (p *Pool) send(uuid string, packet *protocol.PacketSend, ck *protocol.Ciphe
 	}
 }
 
-func (p *Pool) disconnect(key string) {
-	c, ok := p.unauthorizedConns[key]
+func (p *Pool) disconnect(uuid string) {
+	c, ok := p.unauthorized_conns[uuid]
 	if ok {
 		log.WithFields(log.Fields{
 			"remote addr": c.conn.RemoteAddr().String(),
 		}).Info("auto close unauthorized connection")
 		c.conn.Close()
-		delete(p.unauthorizedConns, key)
+		delete(p.unauthorized_conns, uuid)
+	}
+
+	c2, ok := p.conns[uuid]
+	if ok {
+		log.WithFields(log.Fields{
+			"remote addr": c2.conn.RemoteAddr().String(),
+		}).Info("auto close authorized connection")
+		c2.conn.Close()
+		delete(p.conns, uuid)
 	}
 }
 
 func (p *Pool) get_cipher_key(uuid string) (*protocol.CipherKey, error) {
 	c := GlobalPool.conns[uuid]
 	if c == nil {
-		c = GlobalPool.unauthorizedConns[uuid]
+		c = GlobalPool.unauthorized_conns[uuid]
 	}
 
 	if c == nil {
