@@ -1,6 +1,7 @@
 package teleport
 
 import (
+	"fmt"
 	"gateway/protocol"
 	log "github.com/Sirupsen/logrus"
 	"runtime/debug"
@@ -49,8 +50,7 @@ func Dispatch(data []byte, uuid string) (err error) {
 		handle_command(uuid, cmd, ck)
 	}
 
-	teleport, _ := GlobalPool.get_teleport_addr(uuid)
-	publish_packet(teleport, pk)
+	publish_receive_cmd(uuid, pk)
 	return nil
 }
 
@@ -69,4 +69,10 @@ func handle_command(uuid string, cmd protocol.Command, ck *protocol.CipherKey) {
 	if ok {
 		log.Info(ev)
 	}
+}
+
+func publish_receive_cmd(uuid string, pk *protocol.PacketReceive) {
+	teleport, _ := GlobalPool.get_teleport_addr(uuid)
+	msg := fmt.Sprintf("%d,%d,%s,%s", teleport, pk.Addr, pk.Op, pk.Params)
+	redis_publish(msg)
 }

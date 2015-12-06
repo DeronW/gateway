@@ -71,7 +71,7 @@ func (p *Pool) send(uuid string, packet *protocol.PacketSend, ck *protocol.Ciphe
 	var ok bool
 	var c *connection
 	// teleport login step
-	if packet.Op == 2 { // || packet.Op == 4 {
+	if packet.Op == 2 {
 		c, ok = p.unauthorized_conns[uuid]
 	} else {
 		c, ok = p.conns[uuid]

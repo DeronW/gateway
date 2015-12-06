@@ -2,7 +2,6 @@ package teleport
 
 import (
 	"fmt"
-	"gateway/protocol"
 	"gopkg.in/redis.v3"
 	"sync"
 )
@@ -12,15 +11,14 @@ var redis_client *redis.Client
 var pub_ch_0 string = "receive"
 var sub_ch_0 string = "should_send"
 
-func publish_packet(teleport int, pk *protocol.PacketReceive) {
-	msg := fmt.Sprintf("%d,%d,%s,%s", teleport, pk.Addr, pk.Op, pk.Params)
+func redis_publish(msg string) {
 	err := redis_client.Publish(pub_ch_0, msg).Err()
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-func subscribe_send() {
+func redis_subscribe() {
 	pubsub, err := redis_client.Subscribe(sub_ch_0)
 	if err != nil {
 		panic(err)
@@ -42,6 +40,6 @@ func init() {
 			Password: "", // no password set
 			DB:       0,  // use default DB
 		})
-		go subscribe_send()
+		go redis_subscribe()
 	})
 }
