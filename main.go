@@ -62,7 +62,6 @@ func teleport_config() *tcp.ServerConfig {
 }
 
 func start_server(c *cli.Context) {
-	init_config() // this method should be TOP level
 	db.SetSqlite3Path(viper.GetString("sqlite3"))
 	error_handle.SetupRaven(viper.GetString("sentry_dsn"))
 	go teleport.Run(
@@ -79,6 +78,9 @@ func restart_server(c *cli.Context) {}
 func server_status(c *cli.Context)  {}
 
 func main() {
+
+	init_config() // this method should be TOP level
+
 	app := cli.NewApp()
 	app.Name = "Phantom Gateway Server"
 	app.Version = "0.1"
@@ -116,12 +118,14 @@ func main() {
 			Aliases: []string{"ltpk"},
 			Usage:   "load private key from csv file",
 			Action: func(c *cli.Context) {
+				// csv file format should be:
+				// addr,private_key
+				// ...
 				path := c.Args().First()
 				if path == "" {
 					println("must supply a file path")
 					return
 				}
-
 				db.SetSqlite3Path(viper.GetString("sqlite3"))
 				extra_data.ImportTeleportData(path)
 			},

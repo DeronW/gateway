@@ -30,10 +30,12 @@ func ImportTeleportData(path string) {
 		}
 
 		err = insert_row(record)
+
+		fmt.Println(fmt.Sprintf("%s : %b : %s", record, err == nil, err)) // record has the type []string
 		if err == nil {
-			fail_count += 1
-		} else {
 			success_count += 1
+		} else {
+			fail_count += 1
 			fmt.Println(err)
 		}
 	}
@@ -45,7 +47,6 @@ func ImportTeleportData(path string) {
 }
 
 func insert_row(record []string) error {
-	fmt.Println(record) // record has the type []string
 	if len(record) != 2 {
 		return errors.New("record format error")
 	}

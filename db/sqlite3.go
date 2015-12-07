@@ -7,6 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/delongw/go-int-cipher"
 	_ "github.com/mattn/go-sqlite3"
+	"strings"
 	"sync"
 )
 
@@ -15,7 +16,7 @@ var once sync.Once
 var DB_PATH string = ""
 
 func GetPrivateKey(addr int) (key []byte, ok bool, err error) {
-	stmt, _ := db.Prepare("SELECT encrypted_private_key FROM teleport WHERE encrypted_addr = ?")
+	stmt, _ := db.Prepare("SELECT encrypted_private_key FROM teleport WHERE encrypted_addr=?")
 	defer stmt.Close()
 
 	var encrypted_private_key string
@@ -32,22 +33,29 @@ func GetPrivateKey(addr int) (key []byte, ok bool, err error) {
 	return key, true, nil
 }
 
-func SetPrivateKey(addr int, private_key string) error {
+func SetPrivateKey(addr int, private_key string) (err error) {
 	if len(private_key) != 32 {
 		return errors.New("private length is wrong: " + private_key)
 	}
-	key, ok, _ := GetPrivateKey(addr)
-	if ok && fmt.Sprintf("%X", key) == private_key {
-		return nil
-	}
-
-	stmt, _ := db.Prepare("INSERT INTO teleport (encrypted_addr, encrypted_private_key) VALUES (?, ?)")
-	defer stmt.Close()
 
 	encrypted_addr := int_cipher.Encrypt(uint(addr), RC4_KEY)
 	encrypted_key := encrypt_private_key(private_key)
-	_, err := stmt.Exec(encrypted_addr, encrypted_key)
-	return err
+
+	key, ok, _ := GetPrivateKey(addr)
+	if ok {
+		if fmt.Sprintf("%X", key) == strings.ToUpper(private_key) {
+			return nil
+		} else {
+			stmt, _ := db.Prepare("UPDATE teleport SET encrypted_private_key=? WHERE encrypted_addr=?")
+			defer stmt.Close()
+			_, err = stmt.Exec(encrypted_addr, encrypted_key)
+		}
+	} else {
+		stmt, _ := db.Prepare("INSERT INTO teleport (encrypted_addr, encrypted_private_key) VALUES (?, ?)")
+		defer stmt.Close()
+		_, err = stmt.Exec(encrypted_addr, encrypted_key)
+	}
+	return
 }
 
 func retry_connect() {
@@ -63,9 +71,8 @@ func retry_connect() {
 
 // this is initial func
 func SetSqlite3Path(path string) {
-	if DB_PATH != "" {
-		panic("db path can not be set twice")
-	}
-	DB_PATH = path
-	once.Do(retry_connect)
+	once.Do(func() {
+		DB_PATH = path
+		retry_connect()
+	})
 }
