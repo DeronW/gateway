@@ -18,6 +18,10 @@ func Validate() {
 	GetCipherCfg().validate()
 }
 
+func GetString(key string) string {
+	return viper.GetString(key)
+}
+
 func GetTCPConfig() *TCP {
 	return &TCP{
 		Host:              viper.GetString("tcp.host"),
