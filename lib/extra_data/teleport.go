@@ -4,12 +4,15 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	sqlite "gateway/db"
+	sqlite "gateway/sqlite3"
 	"io"
 	"os"
 	"strconv"
 )
 
+// csv file format should be:
+// addr,private_key
+// ...
 func ImportTeleportData(path string) {
 	file, err := os.Open(path)
 	if err != nil {

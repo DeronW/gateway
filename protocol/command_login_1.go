@@ -3,8 +3,8 @@ package protocol
 import (
 	"crypto/aes"
 	"fmt"
-	"gateway/db"
 	"gateway/lib/misc"
+	sqlite "gateway/sqlite3"
 )
 
 type Command_login1 struct {
@@ -32,7 +32,7 @@ func CommandLoginSetup(pk *PacketReceive, ck *CipherKey) (
 	nonce1, _ := misc.Str2byte(pk.Params)
 	nonce2 := misc.Rand8byte()
 	nonce := append(nonce1, nonce2...)
-	private_key, _, _ := db.GetPrivateKey(pk.Addr)
+	private_key, _, _ := sqlite.GetPrivateKey(pk.Addr)
 	user_key = append(misc.Rand8byte(), misc.Rand8byte()...)
 	user_key_index = 0
 

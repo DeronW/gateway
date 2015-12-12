@@ -8,6 +8,7 @@ tcp:
     port: 6000
     send_buffer: 60
     receive_buffer: 60
+    duration: 60
 
 keepalive:
     deadline: 30
@@ -15,7 +16,6 @@ keepalive:
     idle: 14
     count: 4
     interval: 13
-    duration: 60
 
 sqlite3: "/home/delong/phantom-go/src/gateway/sqlite3.db"
 

@@ -13,7 +13,7 @@ func (p *Pool) OnConnect(c *tcp.Conn) bool {
 	}).Info("connected")
 
 	// auto close conn if it does not auth in 60s
-	timeout := time.Second * AutoCloseConnection
+	timeout := time.Second * TCP_CONFIG.AutoCloseDuration
 	if timeout != 0 {
 		time.AfterFunc(timeout, func() {
 			if c.Id == 0 {

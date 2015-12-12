@@ -1,6 +1,7 @@
 package error_handle
 
 import (
+	"gateway/config"
 	log "github.com/Sirupsen/logrus"
 	"github.com/getsentry/raven-go"
 	"sync"
@@ -24,9 +25,9 @@ func ReportError(err error) {
 	raven.CaptureError(err, nil, nil)
 }
 
-func SetupRaven(dsn string) {
+func init() {
 	once.Do(func() {
-		raven.SetDSN(dsn)
+		raven.SetDSN(config.GetSentryCfg().DSN)
 		raven.CaptureMessage("Device Gateway server starting", nil)
 	})
 }

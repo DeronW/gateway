@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-var once sync.Once
+var pubsub_once sync.Once
 var redis_client *redis.Client
 var pub_ch_0 string = "receive"
 var sub_ch_0 string = "should_send"
@@ -34,7 +34,7 @@ func redis_subscribe() {
 }
 
 func init() {
-	once.Do(func() {
+	pubsub_once.Do(func() {
 		redis_client = redis.NewClient(&redis.Options{
 			Addr:     "localhost:6379",
 			Password: "", // no password set
