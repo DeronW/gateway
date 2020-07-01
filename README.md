@@ -1,9 +1,9 @@
-Phantom Gateway Server
+Golang TCP Gateway Server
 ============
 
-This server is designed as an alternative to EventMachine tcp.rb server
+This server is designed as an alternative to EventMachine server
 
-dependence lib
+Dependence lib
 
 * github.com/Sirupsen/logrus
 * github.com/getsentry/raven-go
@@ -11,3 +11,4 @@ dependence lib
 * github.com/antonholmquist/jason
 * github.com/spf13/viper
 * github.com/smartystreets/goconvey/
+
